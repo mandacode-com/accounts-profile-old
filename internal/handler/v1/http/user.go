@@ -24,8 +24,8 @@ func NewUserProfileHandler(profile *user.ProfileUsecase, uidHeader string) (*Use
 }
 
 func (h *UserProfileHandler) RegisterRoutes(router *gin.RouterGroup) {
-	router.GET("/", h.GetProfile)
-	router.PUT("/", h.UpdateProfile)
+	router.GET("", h.GetProfile)
+	router.PUT("", h.UpdateProfile)
 }
 
 func (h *UserProfileHandler) GetProfile(c *gin.Context) {
