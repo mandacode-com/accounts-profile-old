@@ -14,7 +14,6 @@ import (
 )
 
 type UserEventHandler struct {
-	// userEvent *userevent.UserEventUsecase
 	profile *system.ProfileUsecase
 }
 
@@ -33,22 +32,26 @@ func (u *UserEventHandler) HandleMessage(ctx context.Context, m kafka.Message) e
 	switch event.EventType {
 	case usereventv1.EventType_USER_DELETED:
 		if err := u.profile.DeleteProfile(ctx, userUUID); err != nil {
-			return errors.Upgrade(err, "Failed to handle user deleted event", errcode.ErrInternalFailure)
+			if !errors.Is(err, errcode.ErrNotFound) {
+				return errors.Upgrade(err, "Failed to handle user deleted event", errcode.ErrInternalFailure)
+			}
 		}
 	case usereventv1.EventType_USER_ARCHIVED:
 		if err := u.profile.ArchiveProfile(ctx, userUUID); err != nil {
-			return errors.Upgrade(err, "Failed to handle user archived event", errcode.ErrInternalFailure)
+			if !errors.Is(err, errcode.ErrNotFound) {
+				return errors.Upgrade(err, "Failed to handle user archived event", errcode.ErrInternalFailure)
+			}
 		}
 	case usereventv1.EventType_USER_RESTORED:
 		if err := u.profile.RestoreProfile(ctx, userUUID); err != nil {
-			return errors.Upgrade(err, "Failed to handle user restored event", errcode.ErrInternalFailure)
+			if !errors.Is(err, errcode.ErrNotFound) {
+				return errors.Upgrade(err, "Failed to handle user restored event", errcode.ErrInternalFailure)
+			}
 		}
 	case usereventv1.EventType_USER_BLOCKED:
 		return nil
 	case usereventv1.EventType_USER_UNBLOCKED:
 		return nil
-	default:
-		return errors.New("unsupported user event type", "User Event Handler Error", errcode.ErrInvalidInput)
 	}
 
 	return nil
