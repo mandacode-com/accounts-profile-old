@@ -135,3 +135,11 @@ func (r *ProfileRepository) DeleteProfile(ctx context.Context, userID uuid.UUID)
 
 	return nil
 }
+
+func (r *ProfileRepository) CheckNicknameExists(ctx context.Context, nickname string) (bool, error) {
+	count, err := r.client.Profile.Query().Where(profile.Nickname(nickname)).Count(ctx)
+	if err != nil {
+		return false, errors.Upgrade(err, "Failed to check nickname validity", errcode.ErrInternalFailure)
+	}
+	return count == 0, nil
+}
