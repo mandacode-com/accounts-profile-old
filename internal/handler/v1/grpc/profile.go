@@ -9,8 +9,6 @@ import (
 	"github.com/mandacode-com/golib/errors"
 	"github.com/mandacode-com/golib/errors/errcode"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"mandacode.com/accounts/profile/internal/usecase/dto"
 	"mandacode.com/accounts/profile/internal/usecase/system"
@@ -25,24 +23,18 @@ type ProfileHandler struct {
 // UpdateEmail implements profilev1.ProfileServiceServer.
 func (u *ProfileHandler) UpdateEmail(ctx context.Context, req *profilev1.UpdateEmailRequest) (*profilev1.UpdateEmailResponse, error) {
 	if err := req.Validate(); err != nil {
-		u.logger.Error("UpdateEmail request validation failed", zap.Error(err))
-		return nil, status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
+		return nil, errors.Upgrade(err, "Failed to validate UpdateEmailRequest", errcode.ErrInvalidFormat)
 	}
 	userID, err := uuid.Parse(req.UserId)
 	if err != nil {
-		u.logger.Error("Invalid user ID format", zap.Error(err), zap.String("user_id", req.UserId))
-		return nil, status.Errorf(codes.InvalidArgument, "invalid user ID: %v", err)
+		return nil, errors.Upgrade(err, "Failed to parse user ID", errcode.ErrInvalidFormat)
 	}
 	profile, err := u.profile.UpdateProfile(ctx, &dto.UpdateProfileData{
 		UserID: userID,
 		Email:  &req.NewEmail,
 	})
 	if err != nil {
-		u.logger.Error("Failed to update email", zap.Error(err), zap.String("user_id", req.UserId))
-		if appErr, ok := err.(*errors.AppError); ok {
-			return nil, status.Errorf(errcode.MapCodeToGRPC(appErr.Code()), appErr.Public())
-		}
-		return nil, status.Errorf(codes.Internal, "failed to update email: %v", err)
+		return nil, err
 	}
 
 	return &profilev1.UpdateEmailResponse{
@@ -55,23 +47,17 @@ func (u *ProfileHandler) UpdateEmail(ctx context.Context, req *profilev1.UpdateE
 // DeleteUser implements userv1.UserServiceServer.
 func (u *ProfileHandler) DeleteUser(ctx context.Context, req *profilev1.DeleteUserRequest) (*profilev1.DeleteUserResponse, error) {
 	if err := req.Validate(); err != nil {
-		u.logger.Error("DeleteUser request validation failed", zap.Error(err))
-		return nil, status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
+		return nil, errors.Upgrade(err, "Failed to validate DeleteUserRequest", errcode.ErrInvalidFormat)
 	}
 
 	userID, err := uuid.Parse(req.UserId)
 	if err != nil {
-		u.logger.Error("Invalid user ID format", zap.Error(err), zap.String("user_id", req.UserId))
-		return nil, status.Errorf(codes.InvalidArgument, "invalid user ID: %v", err)
+		return nil, errors.Upgrade(err, "Failed to parse user ID", errcode.ErrInvalidFormat)
 	}
 
 	err = u.profile.DeleteProfile(ctx, userID)
 	if err != nil {
-		u.logger.Error("Failed to delete user", zap.Error(err), zap.String("user_id", req.UserId))
-		if appErr, ok := err.(*errors.AppError); ok {
-			return nil, status.Errorf(errcode.MapCodeToGRPC(appErr.Code()), appErr.Public())
-		}
-		return nil, status.Errorf(codes.Internal, "failed to delete user: %v", err)
+		return nil, err
 	}
 
 	return &profilev1.DeleteUserResponse{
@@ -83,14 +69,12 @@ func (u *ProfileHandler) DeleteUser(ctx context.Context, req *profilev1.DeleteUs
 // InitUser implements userv1.UserServiceServer.
 func (u *ProfileHandler) InitUser(ctx context.Context, req *profilev1.InitUserRequest) (*profilev1.InitUserResponse, error) {
 	if err := req.Validate(); err != nil {
-		u.logger.Error("InitUser request validation failed", zap.Error(err))
-		return nil, status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
+		return nil, errors.Upgrade(err, "Failed to validate InitUserRequest", errcode.ErrInvalidFormat)
 	}
 
 	userID, err := uuid.Parse(req.UserId)
 	if err != nil {
-		u.logger.Error("Invalid user ID format", zap.Error(err), zap.String("user_id", req.UserId))
-		return nil, status.Errorf(codes.InvalidArgument, "invalid user ID: %v", err)
+		return nil, errors.Upgrade(err, "Failed to parse user ID", errcode.ErrInvalidFormat)
 	}
 
 	// parse initial nickname from email by splitting at '@' and taking the first part
@@ -110,10 +94,7 @@ func (u *ProfileHandler) InitUser(ctx context.Context, req *profilev1.InitUserRe
 		Nickname: nickname,
 	})
 	if err != nil {
-		if appErr, ok := err.(*errors.AppError); ok {
-			return nil, status.Errorf(errcode.MapCodeToGRPC(appErr.Code()), appErr.Public())
-		}
-		return nil, status.Errorf(codes.Internal, "failed to initialize user: %v", err)
+		return nil, err
 	}
 
 	return &profilev1.InitUserResponse{
