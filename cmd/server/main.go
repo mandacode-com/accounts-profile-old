@@ -59,7 +59,7 @@ func main() {
 	// Initialize use cases
 	adminProfileUsecase := admin.NewProfileUsecase(profileRepo)
 	userProfileUsecase := user.NewProfileUsecase(profileRepo)
-	systemProfileUsecase := system.NewProfileUsecase(profileRepo, randomNicknameGenerator)
+	systemProfileUsecase := system.NewProfileUsecase(profileRepo, randomNicknameGenerator, cfg.MaxNicknameRetries)
 
 	// Initialize HTTP handlers
 	userHandler, err := httphandlerv1.NewUserProfileHandler(userProfileUsecase, cfg.HTTPServer.UIDHeader)
