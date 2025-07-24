@@ -2,8 +2,6 @@ package grpchandlerv1
 
 import (
 	"context"
-	"strings"
-
 	"github.com/google/uuid"
 	profilev1 "github.com/mandacode-com/accounts-proto/go/profile/v1"
 	"github.com/mandacode-com/golib/errors"
@@ -77,21 +75,9 @@ func (u *ProfileHandler) InitUser(ctx context.Context, req *profilev1.InitUserRe
 		return nil, errors.Upgrade(err, "Failed to parse user ID", errcode.ErrInvalidFormat)
 	}
 
-	// parse initial nickname from email by splitting at '@' and taking the first part
-	var nickname string
-	if req.Email != "" {
-		parts := strings.Split(req.Email, "@")
-		if len(parts) > 0 {
-			nickname = parts[0]
-		}
-	} else {
-		nickname = "user_" + userID.String() // fallback nickname
-	}
-
 	user, err := u.profile.CreateProfile(ctx, &dto.CreateProfileData{
-		UserID:   userID,
-		Email:    req.Email,
-		Nickname: nickname,
+		UserID: userID,
+		Email:  req.Email,
 	})
 	if err != nil {
 		return nil, err
