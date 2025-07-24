@@ -21,6 +21,7 @@ import (
 	"mandacode.com/accounts/profile/internal/usecase/admin"
 	"mandacode.com/accounts/profile/internal/usecase/system"
 	"mandacode.com/accounts/profile/internal/usecase/user"
+	"mandacode.com/accounts/profile/internal/util"
 )
 
 func main() {
@@ -49,13 +50,16 @@ func main() {
 		GroupID: cfg.UserEventReader.GroupID,
 	})
 
+	// Initialize util
+	randomNicknameGenerator := util.NewRandomNicknameGenerator(cfg.InitialNicknameLength)
+
 	// Initialize repositories
 	profileRepo := dbrepo.NewProfileRepository(dbClient)
 
 	// Initialize use cases
 	adminProfileUsecase := admin.NewProfileUsecase(profileRepo)
 	userProfileUsecase := user.NewProfileUsecase(profileRepo)
-	systemProfileUsecase := system.NewProfileUsecase(profileRepo)
+	systemProfileUsecase := system.NewProfileUsecase(profileRepo, randomNicknameGenerator)
 
 	// Initialize HTTP handlers
 	userHandler, err := httphandlerv1.NewUserProfileHandler(userProfileUsecase, cfg.HTTPServer.UIDHeader)

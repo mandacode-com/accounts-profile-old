@@ -43,11 +43,12 @@ type GRPCServerConfig struct {
 }
 
 type Config struct {
-	Env             string            `validate:"required,oneof=dev prod"`
-	DatabaseURL     string            `validate:"required"`
-	HTTPServer      HTTPServerConfig  `validate:"required"`
-	GRPCServer      GRPCServerConfig  `validate:"required"`
-	UserEventReader KafkaReaderConfig `validate:"required"`
+	Env                   string            `validate:"required,oneof=dev prod"`
+	DatabaseURL           string            `validate:"required"`
+	HTTPServer            HTTPServerConfig  `validate:"required"`
+	GRPCServer            GRPCServerConfig  `validate:"required"`
+	UserEventReader       KafkaReaderConfig `validate:"required"`
+	InitialNicknameLength int               `validate:"required,min=3,max=20"` // Length for random nickname generation
 }
 
 // LoadConfig loads env vars from .env (if exists) and returns structured config
@@ -65,6 +66,11 @@ func LoadConfig(validator *validator.Validate) (*Config, error) {
 		return nil, err
 	}
 
+	initialNicknameLength, err := strconv.Atoi(getEnv("INITIAL_NICKNAME_LENGTH", "8"))
+	if err != nil || initialNicknameLength < 3 || initialNicknameLength > 30 {
+		return nil, errors.New("invalid INITIAL_NICKNAME_LENGTH", "Must be between 3 and 30", errcode.ErrInvalidInput)
+	}
+
 	config := &Config{
 		Env: getEnv("ENV", "dev"),
 		HTTPServer: HTTPServerConfig{
@@ -80,6 +86,7 @@ func LoadConfig(validator *validator.Validate) (*Config, error) {
 			Topic:   getEnv("USER_EVENT_READER_TOPIC", "user_event"),
 			GroupID: getEnv("USER_EVENT_READER_GROUP_ID", "user_event_group"),
 		},
+		InitialNicknameLength: initialNicknameLength,
 	}
 
 	if err := validator.Struct(config); err != nil {
