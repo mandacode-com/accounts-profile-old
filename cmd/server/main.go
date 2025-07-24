@@ -51,7 +51,7 @@ func main() {
 	})
 
 	// Initialize util
-	randomNicknameGenerator := util.NewRandomNicknameGenerator(cfg.InitialNicknameLength)
+	randomNicknameGenerator := util.NewRandomNicknameGenerator(cfg.NicknamePrefix, cfg.InitialNicknameLength)
 
 	// Initialize repositories
 	profileRepo := dbrepo.NewProfileRepository(dbClient)

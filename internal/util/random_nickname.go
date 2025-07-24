@@ -3,11 +3,13 @@ package util
 import "math/rand"
 
 type RandomNicknameGenerator struct {
+	Prefix string
 	Length int
 }
 
-func NewRandomNicknameGenerator(length int) *RandomNicknameGenerator {
+func NewRandomNicknameGenerator(Prefix string, length int) *RandomNicknameGenerator {
 	return &RandomNicknameGenerator{
+		Prefix: Prefix,
 		Length: length,
 	}
 }
@@ -18,5 +20,6 @@ func (g *RandomNicknameGenerator) Generate() string {
 	for i := range nickname {
 		nickname[i] = charset[rand.Intn(len(charset))]
 	}
-	return string(nickname)
+	return g.Prefix + string(nickname)
 }
+

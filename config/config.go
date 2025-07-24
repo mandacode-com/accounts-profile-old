@@ -50,6 +50,7 @@ type Config struct {
 	UserEventReader       KafkaReaderConfig `validate:"required"`
 	InitialNicknameLength int               `validate:"required,min=3,max=20"` // Length for random nickname generation
 	MaxNicknameRetries    int               `validate:"required,min=1,max=10"` // Max retries for nickname generation
+	NicknamePrefix        string            `validate:"omitempty"`             // Optional prefix for generated nicknames
 }
 
 // LoadConfig loads env vars from .env (if exists) and returns structured config
@@ -93,6 +94,7 @@ func LoadConfig(validator *validator.Validate) (*Config, error) {
 		},
 		InitialNicknameLength: initialNicknameLength,
 		MaxNicknameRetries:    maxNicknameRetries,
+		NicknamePrefix:        getEnv("NICKNAME_PREFIX", "user_"),
 	}
 
 	if err := validator.Struct(config); err != nil {
