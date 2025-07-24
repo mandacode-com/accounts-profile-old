@@ -12,17 +12,20 @@ import (
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
+	grpcmiddleware "mandacode.com/accounts/profile/internal/middleware/grpc"
 )
 
 type GRPCServer struct {
-	server *grpc.Server
+	server         *grpc.Server
 	profileHandler profilev1.ProfileServiceServer
-	logger      *zap.Logger
-	port        int
+	logger         *zap.Logger
+	port           int
 }
 
 func NewGRPCServer(port int, logger *zap.Logger, profileHandler profilev1.ProfileServiceServer, servingServices []string) (server.Server, error) {
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(grpcmiddleware.ErrorHandlerInterceptor(logger)),
+	)
 
 	// Register health check service
 	healthServer := health.NewServer()
@@ -38,10 +41,10 @@ func NewGRPCServer(port int, logger *zap.Logger, profileHandler profilev1.Profil
 	profilev1.RegisterProfileServiceServer(server, profileHandler)
 
 	return &GRPCServer{
-		server:      server,
+		server:         server,
 		profileHandler: profileHandler,
-		logger:      logger,
-		port:        port,
+		logger:         logger,
+		port:           port,
 	}, nil
 }
 
