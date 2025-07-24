@@ -123,7 +123,7 @@ func (r *ProfileRepository) DeleteProfile(ctx context.Context, userID uuid.UUID)
 	prof, err := r.client.Profile.Query().Where(profile.UserID(userID)).Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return errors.New("profile not found", "Failed to delete profile", errcode.ErrNotFound)
+			return errors.Upgrade(err, "Failed to delete profile", errcode.ErrNotFound)
 		}
 		return errors.Upgrade(err, "Failed to delete profile", errcode.ErrInternalFailure)
 	}
