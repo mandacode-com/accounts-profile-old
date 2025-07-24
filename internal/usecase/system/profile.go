@@ -7,15 +7,18 @@ import (
 	dbmodels "mandacode.com/accounts/profile/internal/models/database"
 	dbrepo "mandacode.com/accounts/profile/internal/repository/database"
 	"mandacode.com/accounts/profile/internal/usecase/dto"
+	"mandacode.com/accounts/profile/internal/util"
 )
 
 type ProfileUsecase struct {
-	repo *dbrepo.ProfileRepository
+	repo                    *dbrepo.ProfileRepository
+	randomNicknameGenerator *util.RandomNicknameGenerator
 }
 
-func NewProfileUsecase(repo *dbrepo.ProfileRepository) *ProfileUsecase {
+func NewProfileUsecase(repo *dbrepo.ProfileRepository, randomNicknameGenerator *util.RandomNicknameGenerator) *ProfileUsecase {
 	return &ProfileUsecase{
-		repo: repo,
+		repo:                    repo,
+		randomNicknameGenerator: randomNicknameGenerator,
 	}
 }
 
@@ -29,7 +32,8 @@ func (u *ProfileUsecase) GetProfile(ctx context.Context, userID uuid.UUID) (*dbm
 }
 
 func (u *ProfileUsecase) CreateProfile(ctx context.Context, data *dto.CreateProfileData) (*dbmodels.SecureProfile, error) {
-	prof, err := u.repo.CreateProfile(ctx, data.ToRepoModel())
+	nickname := u.randomNicknameGenerator.Generate()
+	prof, err := u.repo.CreateProfile(ctx, data.ToRepoModel(nickname))
 	if err != nil {
 		return nil, err
 	}

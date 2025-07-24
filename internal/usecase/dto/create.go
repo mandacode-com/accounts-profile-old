@@ -6,15 +6,14 @@ import (
 )
 
 type CreateProfileData struct {
-	UserID   uuid.UUID `json:"user_id"`
-	Email    string    `json:"email,omitempty"`
-	Nickname string    `json:"nickname,omitempty"`
+	UserID uuid.UUID `json:"user_id"`
+	Email  string    `json:"email,omitempty"`
 }
 
-func (data CreateProfileData) ToRepoModel() *dbrepo.CreateProfileModel {
+func (data CreateProfileData) ToRepoModel(nickname string) *dbrepo.CreateProfileModel {
 	return &dbrepo.CreateProfileModel{
 		UserID:   data.UserID,
 		Email:    data.Email,
-		Nickname: data.Nickname,
+		Nickname: nickname,
 	}
 }
