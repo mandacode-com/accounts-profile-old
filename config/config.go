@@ -43,11 +43,14 @@ type GRPCServerConfig struct {
 }
 
 type Config struct {
-	Env             string            `validate:"required,oneof=dev prod"`
-	DatabaseURL     string            `validate:"required"`
-	HTTPServer      HTTPServerConfig  `validate:"required"`
-	GRPCServer      GRPCServerConfig  `validate:"required"`
-	UserEventReader KafkaReaderConfig `validate:"required"`
+	Env                   string            `validate:"required,oneof=dev prod"`
+	DatabaseURL           string            `validate:"required"`
+	HTTPServer            HTTPServerConfig  `validate:"required"`
+	GRPCServer            GRPCServerConfig  `validate:"required"`
+	UserEventReader       KafkaReaderConfig `validate:"required"`
+	InitialNicknameLength int               `validate:"required,min=3,max=20"` // Length for random nickname generation
+	MaxNicknameRetries    int               `validate:"required,min=1,max=10"` // Max retries for nickname generation
+	NicknamePrefix        string            `validate:"omitempty"`             // Optional prefix for generated nicknames
 }
 
 // LoadConfig loads env vars from .env (if exists) and returns structured config
@@ -65,6 +68,15 @@ func LoadConfig(validator *validator.Validate) (*Config, error) {
 		return nil, err
 	}
 
+	initialNicknameLength, err := strconv.Atoi(getEnv("INITIAL_NICKNAME_LENGTH", "8"))
+	if err != nil || initialNicknameLength < 3 || initialNicknameLength > 30 {
+		return nil, errors.New("invalid INITIAL_NICKNAME_LENGTH", "Must be between 3 and 30", errcode.ErrInvalidInput)
+	}
+	maxNicknameRetries, err := strconv.Atoi(getEnv("MAX_NICKNAME_RETRIES", "5"))
+	if err != nil || maxNicknameRetries < 1 || maxNicknameRetries > 10 {
+		return nil, errors.New("invalid MAX_NICKNAME_RETRIES", "Must be between 1 and 10", errcode.ErrInvalidInput)
+	}
+
 	config := &Config{
 		Env: getEnv("ENV", "dev"),
 		HTTPServer: HTTPServerConfig{
@@ -80,6 +92,9 @@ func LoadConfig(validator *validator.Validate) (*Config, error) {
 			Topic:   getEnv("USER_EVENT_READER_TOPIC", "user_event"),
 			GroupID: getEnv("USER_EVENT_READER_GROUP_ID", "user_event_group"),
 		},
+		InitialNicknameLength: initialNicknameLength,
+		MaxNicknameRetries:    maxNicknameRetries,
+		NicknamePrefix:        getEnv("NICKNAME_PREFIX", "user_"),
 	}
 
 	if err := validator.Struct(config); err != nil {
